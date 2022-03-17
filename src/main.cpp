@@ -1,6 +1,6 @@
 #include "lib.h"
 #include <algorithm>
-// #include <ncurses.h>
+#include <ncurses.h>
 
 // main.cpp
 int main(int argc, char *argv[])
@@ -10,12 +10,10 @@ int main(int argc, char *argv[])
 	// refresh();			/* Print it on to the real screen */
 	// getch();			/* Wait for user input */
 	// endwin();			/* End curses mode		  */
-	// 
-	// constexpr int width = 80;
-	// constexpr int height = 40;
-	// resizeterm(height, width);
-
-
+	 
+	constexpr int termWidth = 25;
+	constexpr int termHeight = 20;
+	// resizeterm(termHeight, termWidth);
     
     int width = 15;
     int heigth = 10;
@@ -51,24 +49,13 @@ int main(int argc, char *argv[])
         fill = argv[1][0];
     }
     
-    Writer PabloNeruda(20, 30, fill);
-    
-    // for(int y = 0; y < windowBuffer->height; ++y) {
-        // for(int x = 0; x < windowBuffer->width; ++x) {
-            // wallBuffer->data[x+posx-1 + (y+posy-1)*wallBuffer->width] = windowBuffer->data[x+y*windowBuffer->width];
-        // }
-    // }
+    Writer PabloNeruda(termWidth, termHeight, fill);
     
     // print result
     PabloNeruda.AddRoot(&wall);
     PabloNeruda.RenderScene();
     PabloNeruda.WriteOnConsole();
     
-    // for(int i=0; i < wallBuffer->height; i++) {
-        // for(int j=0; j<wallBuffer->width; j++) {
-            // cout << wallBuffer->data[j+i*wallBuffer->width];
-        // }
-        // cout << '\n';
-    // }
-	// return 0;
+
+	return 0;
 }

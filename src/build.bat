@@ -1,26 +1,20 @@
 @echo off
+ 
 
-@REM if NOT DEFINED project_root (
-@REM set project_root=%~dp0
-    @REM project_root=%project_root%\..
-@REM )
-@REM 
-@REM pushd "%project_root%"
-@REM 
-@REM 
-@REM set proj_root=%~dp0
-@REM pushd "%proj_root%\.."
-@REM set proj_root=%cd%
-@REM popd
-
-IF NOT EXIST "..\build" (
-    mkdir "..\build"
+:: executes the command ("%~dp0\..") and sets the variable i equal to the result
+if not defined PROJ_ROOT (
+    for /f "delims=" %%i in ("%~dp0\..") do ( 
+        set "PROJ_ROOT=%%~fi"
+    )
 )
 
+IF NOT EXIST "%PROJ_ROOT%\build" (
+    mkdir "%PROJ_ROOT%\build"
+)
 
-setlocal 
+setlocal
 
-pushd ..\build
+pushd %PROJ_ROOT%\build
 
 set path=d:\DevEnv\msys64\mingw64\include\ncurses;%path%
 
@@ -30,7 +24,7 @@ set ncurses_include=-Id:\DevEnv\msys64\mingw64\include\ncurses
 set DefaultCompileOptions=-g -std=c++17
 set Libraries=-lncurses %ncurses_include%
 
-g++ %DefaultCompileOptions% -o main.exe ..\src\main.cpp %Libraries%
+g++ %DefaultCompileOptions% -o main.exe %PROJ_ROOT%\src\main.cpp %Libraries%
 
 ::clang++ -fsanitize=address %DefaultCompileOptions% -o main.exe ..\src\main.cpp %Libraries%
 

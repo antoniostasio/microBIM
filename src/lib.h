@@ -98,7 +98,7 @@ void Node::DrawIn(const CharBuffer* buffer, int atX, int atY) const {
 class Writer {
 public:
 	Writer(): _paperSheet{} {}
-	Writer(int rows, int columns, char fill = ' ') {
+	Writer(int columns, int rows, char fill = ' ') {
 		_paperSheet = new CharBuffer();
 		_paperSheet->data = new char[rows*columns];
 		_paperSheet->width = columns;
