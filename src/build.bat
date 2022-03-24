@@ -26,6 +26,6 @@ set Libraries=-lncurses %ncurses_include%
 
 g++ %DefaultCompileOptions% -o main.exe %PROJ_ROOT%\src\main.cpp %Libraries%
 
-::clang++ -fsanitize=address %DefaultCompileOptions% -o main.exe ..\src\main.cpp %Libraries%
+::clang++ -fsanitize=address %DefaultCompileOptions% -o main.exe %PROJ_ROOT%\src\main.cpp %Libraries%
 
 endlocal

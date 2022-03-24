@@ -1,26 +1,27 @@
 #include "lib.h"
 #include <algorithm>
-#include <ncurses.h>
+// #include <ncurses.h>
 
 // main.cpp
 int main(int argc, char *argv[])
 {	
-	// initscr();			/* Start curses mode 		  */
+	 
+	constexpr int termWidth = 25;
+	constexpr int termHeight = 20;
+    
+    // initscr();			/* Start curses mode 		  */
 	// printw("Hello World !!!");	/* Print Hello World		  */
 	// refresh();			/* Print it on to the real screen */
 	// getch();			/* Wait for user input */
 	// endwin();			/* End curses mode		  */
-	 
-	constexpr int termWidth = 25;
-	constexpr int termHeight = 20;
 	// resizeterm(termHeight, termWidth);
     
     int width = 15;
     int heigth = 10;
     std::shared_ptr<CharBuffer> wallBuffer = std::make_shared<CharBuffer>();
     wallBuffer->data = new char[heigth * width];
-    wallBuffer->height = heigth;
-    wallBuffer->width = width;
+    wallBuffer->size.height = heigth;
+    wallBuffer->size.width = width;
     std::fill_n(wallBuffer->data, width*heigth, '@');
 
     int posx = 5;
@@ -33,16 +34,27 @@ int main(int argc, char *argv[])
     heigth = 4;
     std::shared_ptr<CharBuffer> windowBuffer = std::make_shared<CharBuffer>();
     windowBuffer->data = new char[heigth * width];
-    windowBuffer->height = heigth;
-    windowBuffer->width = width;
+    windowBuffer->size.height = heigth;
+    windowBuffer->size.width = width;
     std::fill_n(windowBuffer->data, width*heigth, '-');
     
-    posx = 2;
+    posx = 1;
     posy = 3;
     Node window(posx, posy);
     window.SetImage(windowBuffer);
     
-    wall.AddChild(window);
+    posx = 7;
+    Node window2(posx, posy);
+    window2.SetImage(windowBuffer);
+    
+    // wall.AddChild(window);
+    // if(!window.CheckCollisionWith(window2))
+        // wall.AddChild(window2);
+
+    wall.AddChild(window2);
+    if(!window2.CheckCollisionWith(window))
+        wall.AddChild(window);
+    
     
     char fill = ' ';
     if(argc>1) {
