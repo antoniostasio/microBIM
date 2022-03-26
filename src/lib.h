@@ -1,6 +1,7 @@
 #include <iostream>
 #include <list>
 #include <memory>
+#include <chrono>
 
 using std::cout;
 using std::list;
@@ -54,8 +55,11 @@ public:
 	void AddChild(Node& elem);
 	void AddParent(Node* parent);
 	void SetImage(std::shared_ptr<CharBuffer>& txture) {_ctxture = txture;}
-	void DrawIn(const CharBuffer* buffer, int atX, int atY) const;
+	virtual void DrawIn(const CharBuffer* buffer, int atX, int atY) const;
 	bool CheckCollisionWith(const Node& elem);
+	
+	const char* const getPixel(int atX, int atY) const;
+	virtual void DrawByPixel() const;
 	
 	void X(int val) {_position.x = val;}
 	void Y(int val) {_position.y = val;}
@@ -89,6 +93,7 @@ void Node::AddChild(Node& elem) {
 	elem._parent = this;
 }
 
+// TODO skip char = 0
 void Node::DrawIn(const CharBuffer* buffer, int atX, int atY) const {
 	int srcHeight = buffer->size.height;
 	int srcWidth = buffer->size.width;
@@ -136,6 +141,29 @@ bool Node::CheckCollisionWith(const Node& other) {
 	return(collision);
 }
 
+const char* const Node::getPixel(int atX, int atY) const {
+	int relativeX = atX-_position.x;
+	int relativeY = atY-_position.y;
+	if((relativeX >= 0) && (relativeX < _ctxture->size.width)
+	&& (relativeY >= 0) && (relativeY < _ctxture->size.height)) {
+		// check if childern need to draw
+		for(const auto& child : _children) {
+			const char* const c = child->getPixel(relativeX, relativeY);
+			if(c != nullptr)
+				return c;
+		}
+		
+		return &_ctxture->data[relativeX + relativeY*_ctxture->size.width];
+	}
+	return nullptr;
+}
+
+
+void Node::DrawByPixel() const {
+	
+}
+
+
 // Writer.h
 class Writer {
 public:
@@ -148,7 +176,8 @@ public:
 		std::fill_n(_paperSheet->data, rows*columns, fill);
 	}
 	void AddRoot(Node* root);
-	void RenderScene(int startingX, int startingY);
+	void RenderScene(int startingX=0, int startingY=0);
+	void RenderSceneByPixel(int startingX=0, int startingY=0);
 	void WriteOnConsole();
 private:
 	CharBuffer *_paperSheet;
@@ -161,9 +190,23 @@ void Writer::AddRoot(Node* root) {
 	_drafts = root;
 }
 
-void Writer::RenderScene(int startingX=0, int startingY=0) {
+void Writer::RenderScene(int startingX, int startingY) {
 		_drafts->DrawIn(_paperSheet, startingX, startingY);
 	}
+
+void Writer::RenderSceneByPixel(int startingX, int startingY) {
+	uint32_t sceneWidth = _paperSheet->size.width;
+	uint32_t sceneHeight = _paperSheet->size.height;
+	for(int y=startingY; y < sceneHeight; ++y) {
+		for(int x=startingX; x < sceneWidth; x++) {
+			const char* const c = _drafts->getPixel(x, y);
+			if(c != nullptr)
+				_paperSheet->data[x + y*sceneWidth] = *c;
+			// cout << _paperSheet->data[x + y*sceneWidth];
+		}
+		// cout << std::endl;
+	}
+}
 
 void Writer::WriteOnConsole() {
 	for(int i=0; i < _paperSheet->size.height; i++) {
