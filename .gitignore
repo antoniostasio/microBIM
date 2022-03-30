@@ -1,0 +1,4 @@
+*.png
+*.puml
+CMakeLists.txt
+note.txt
