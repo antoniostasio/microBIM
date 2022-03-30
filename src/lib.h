@@ -1,3 +1,4 @@
+#pragma once
 #include <iostream>
 #include <list>
 #include <memory>
@@ -26,6 +27,26 @@ struct CharBuffer {
 }
 ;
 
+vec2i operator-(const vec2i& left, const vec2i& right) {
+	return vec2i{left.x-right.x, left.y-right.y};
+}
+
+vec2i operator+(const vec2i& left, const vec2i& right) {
+	return vec2i{left.x+right.x, left.y+right.y};
+}
+
+vec2i& operator-=(vec2i& left, const vec2i& right) {
+	left.x -= right.x;
+	left.y -= right.y;
+	return left;
+}
+
+vec2i& operator+=(vec2i& left, const vec2i& right) {
+	left.x += right.x;
+	left.y += right.y;
+	return left;
+}
+
 // Drawable.h
 class Drawable {
 public:
@@ -39,10 +60,8 @@ protected:
 // Node.h
 class Node {
 public:
-	// Node(): _ctexture(nullptr), _parent(nullptr) {}
-	Node(int x = 0, int y = 0): _ctxture(nullptr), _parent(nullptr) {
-		X(x); Y(y);
-	}
+	Node(int x = 0, int y = 0): _ctxture(nullptr), _parent(nullptr), _position({x, y}) {}
+	Node(const vec2i& v): _ctxture(nullptr), _parent(nullptr), _position(v) {}
 	Node(const Node&) = delete;
 	// Node(const Node&& nd) noexcept : 
 		// _position(std::move(nd._position)),
@@ -52,11 +71,11 @@ public:
 	// {};
 	Node& operator=(const Node&) = delete;
 	
-	void AddChild(Node& elem);
-	void AddParent(Node* parent);
+	void AddChild(std::unique_ptr<Node> elem); // TODO move protected
+	void AddParent(Node* parent);			   // TODO move protected
 	void SetImage(std::shared_ptr<CharBuffer>& txture) {_ctxture = txture;}
 	virtual void DrawIn(const CharBuffer* buffer, int atX, int atY) const;
-	bool CheckCollisionWith(const Node& elem);
+	bool CollidesWith(const Node& elem);
 	
 	const char* const getPixel(int atX, int atY) const;
 	virtual void DrawByPixel() const;
@@ -68,7 +87,8 @@ public:
 	int Y() const {return _position.y;}
 	
 	Size getSize() const;
-private:
+    std::shared_ptr<CharBuffer> NodeBuffer();
+protected:
 	vec2i _position;
 	list<std::unique_ptr<Node>> _children;
 	// std::weak_ptr<Node> _parent;
@@ -82,17 +102,22 @@ Size Node::getSize() const {
 	return _ctxture->size;
 }
 
+std::shared_ptr<CharBuffer> Node::NodeBuffer() {
+	return _ctxture;
+}
+
+
 void Node::AddParent(Node* parent) {
 	_parent = parent;
 }
 
-// TODO move collision check to client classes (wall, windows, ...)
-void Node::AddChild(Node& elem) {
-	std::unique_ptr<Node> childPtr(&elem);
-	_children.push_back(std::move(childPtr));
-	elem._parent = this;
+// TODO check that child does not exceed parent size
+void Node::AddChild(std::unique_ptr<Node> elem) {
+	elem->_parent = this;
+	_children.push_back(std::move(elem));
 }
 
+// TODO use z in node buffer by drawing from leaves to root skipping already drawn points
 // TODO skip char = 0
 void Node::DrawIn(const CharBuffer* buffer, int atX, int atY) const {
 	int srcHeight = buffer->size.height;
@@ -101,15 +126,10 @@ void Node::DrawIn(const CharBuffer* buffer, int atX, int atY) const {
 	atY += _position.y;
 	for(int y = 0; y < _ctxture->size.height; ++y) {
         for(int x = 0; x < _ctxture->size.width; ++x) {
-			// if((atX+x==7) || (atY+y==8)) {
-				// buffer->data[atX+x
-						//   + (atY+y)*srcWidth] = '/';
-			// } else {
             buffer->data[atX+x
 					   +(atY+y)*srcWidth]
 				= _ctxture->data[x+
 						  		 y*_ctxture->size.width];
-			// }
         }
     }
     for(const auto& child : _children) {
@@ -117,7 +137,7 @@ void Node::DrawIn(const CharBuffer* buffer, int atX, int atY) const {
 	}
 }
 
-bool Node::CheckCollisionWith(const Node& other) {
+bool Node::CollidesWith(const Node& other) {
 	const Size otherSize = other.getSize();
 	
 	uint32_t otherStartX = other.X();
@@ -159,6 +179,7 @@ const char* const Node::getPixel(int atX, int atY) const {
 }
 
 
+
 void Node::DrawByPixel() const {
 	
 }
@@ -175,19 +196,19 @@ public:
 		_paperSheet->size.height = rows;
 		std::fill_n(_paperSheet->data, rows*columns, fill);
 	}
-	void AddRoot(Node* root);
+	void AddRoot(std::unique_ptr<Node> root);
 	void RenderScene(int startingX=0, int startingY=0);
 	void RenderSceneByPixel(int startingX=0, int startingY=0);
 	void WriteOnConsole();
 private:
 	CharBuffer *_paperSheet;
-	Node* _drafts;
+	std::unique_ptr<Node> _drafts;
 }
 ;
 
 // Writer.cpp
-void Writer::AddRoot(Node* root) {
-	_drafts = root;
+void Writer::AddRoot(std::unique_ptr<Node> root) {
+	_drafts = std::move(root);
 }
 
 void Writer::RenderScene(int startingX, int startingY) {

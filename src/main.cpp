@@ -1,9 +1,8 @@
 #include "lib.h"
+#include "bim.h"
 #include <algorithm>
 #include <chrono>
 #include <vector>
-
-// #include <ncurses.h>
 
 template<typename TimeT = std::chrono::milliseconds>
 struct measure
@@ -20,10 +19,8 @@ struct measure
 };
 
 
-// main.cpp
-int main(int argc, char *argv[])
-{	
-	 
+void compareRender() {
+    	 
 	constexpr int termWidth = 20;
 	constexpr int termHeight = 15;
     
@@ -37,9 +34,8 @@ int main(int argc, char *argv[])
 
     int posx = 2;
     int posy = 0;
-    Node wall(posx,posy);
-    wall.SetImage(wallBuffer);
-    
+    std::unique_ptr<Node> wall(new Node(posx,posy));
+    wall->SetImage(wallBuffer);
     
     width = 5;
     heigth = 4;
@@ -51,45 +47,34 @@ int main(int argc, char *argv[])
     
     posx = 1;
     posy = 3;
-    Node window(posx, posy);
-    window.SetImage(windowBuffer);
+    std::unique_ptr<Node> window(new Node(posx, posy));
+    window->SetImage(windowBuffer);
     
     posx = 7;
-    Node window2(posx, posy);
-    window2.SetImage(windowBuffer);
+    std::unique_ptr<Node> window2(new Node(posx, posy));
+    window2->SetImage(windowBuffer);
     
-    wall.AddChild(window);
-    if(!window.CheckCollisionWith(window2))
-        wall.AddChild(window2);
+    wall->AddChild(std::move(window));
+    if(!window->CollidesWith(*window2))
+        wall->AddChild(std::move(window2));
 
-    wall.AddChild(window2);
-    if(!window2.CheckCollisionWith(window))
-        wall.AddChild(window);
+    wall->AddChild(std::move(window2));
+    if(!window2->CollidesWith(*window))
+        wall->AddChild(std::move(window));
     
     
     char fill = 'x';
-    if(argc>1) {
-        fill = argv[1][0];
-    }
     
-    
-    // Writer PabloNeruda(termWidth, termHeight, fill);
-    // 
-    // // print result
-    // PabloNeruda.AddRoot(&wall);
-    // PabloNeruda.RenderSceneByPixel();
-    // PabloNeruda.WriteOnConsole();
+    Writer PabloNeruda(termWidth, termHeight, fill);
+    PabloNeruda.AddRoot(std::move(wall));
     
     // performance test
     using namespace std::chrono;
     
     int averageTime = 0;
-    int iterations = 10;
+    int iterations = 1000;
     for (int i = 0; i < iterations; ++i)
     {
-        Writer PabloNeruda(termWidth, termHeight, fill);
-        PabloNeruda.AddRoot(&wall);
-        
         auto t = measure<std::chrono::nanoseconds>::execution([&PabloNeruda](){
             PabloNeruda.RenderSceneByPixel();
         });
@@ -101,9 +86,6 @@ int main(int argc, char *argv[])
     averageTime = 0;
     for (int i = 0; i < iterations; ++i)
     {
-        Writer PabloNeruda(termWidth, termHeight, fill);
-        PabloNeruda.AddRoot(&wall);
-        
         auto t = measure<std::chrono::nanoseconds>::execution([&PabloNeruda](){
             PabloNeruda.RenderScene();
         });
@@ -111,6 +93,37 @@ int main(int argc, char *argv[])
     }   
     averageTime /= iterations;
     std::cout << "RenderScene():\n\tExecution time: " << averageTime << " ns." << std::endl;
+    
+}
+
+
+// main.cpp
+int main(int argc, char *argv[])
+{	
+    std::unique_ptr<HouseScene> house(new HouseScene(40, 18));
+    house->AddNewFloor();
+    house->AddNewFloor();
+    house->AddDoor(0, 14);
+    // house->AddWindow(0, vec2i{6,3});
+    // house->AddWindow(0, vec2i{22,3});
+    house->AddWindows(0, 3, 3);
+    house->AddWindows(1, 3, 3);
+    // house->AddWindow(1, vec2i{6,3});
+    // house->AddWindow(1, vec2i{14,3});
+    // house->AddWindow(1, vec2i{15,3});
+    // house->AddWindow(1, vec2i{22,3});
+    
+    std::shared_ptr<CharBuffer> image = house->Render();
+    
+    for(int y=0; y < image->size.height;  ++y) {
+        for(int x=0; x < image->size.width; ++x) {
+            cout << image->data[x + y*image->size.width];
+        }
+        cout << '\n';
+    }
+    
+    cout << "Price: " << house->Price()
+         << "\tDays necessary to build: " << house->BuildTime() << '\n';
     
 	return 0;
 }
