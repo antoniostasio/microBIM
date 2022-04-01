@@ -1,5 +1,6 @@
-#include "lib.h"
 #include "bim.h"
+#include "Writer.h"
+#include "HouseScene.h"
 #include <algorithm>
 #include <chrono>
 #include <vector>
@@ -97,6 +98,7 @@ void compareRender() {
 }
 
 
+/*
 // main.cpp
 int main(int argc, char *argv[])
 {	
@@ -126,6 +128,14 @@ int main(int argc, char *argv[])
          << "\tDays necessary to build: " << house->BuildTime() << '\n';
     
 	return 0;
+}
+*/
+
+int main() {
+    
+    start();
+    
+    return(0);
 }
 
 

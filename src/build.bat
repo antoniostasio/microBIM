@@ -22,9 +22,9 @@ set ncurses_include=-Id:\DevEnv\msys64\mingw64\include\ncurses
 
 
 set DefaultCompileOptions=-g -std=c++17
-set Libraries=-lncurses %ncurses_include%
+set Libraries=
 
-g++ %DefaultCompileOptions% -o main.exe %PROJ_ROOT%\src\main.cpp %Libraries%
+g++ %DefaultCompileOptions% %PROJ_ROOT%\src\*.cpp %Libraries% -o gppmain.exe
 
 ::clang++ -fsanitize=address %DefaultCompileOptions% -o main.exe %PROJ_ROOT%\src\main.cpp %Libraries%
 
